@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Threading;
 using LogReader.Models;
@@ -24,8 +26,11 @@ public sealed class LogDocumentViewModel : ObservableObject, IDisposable
     public string Title { get; }
     public string ParserName => _parser.Name;
 
-    public ObservableCollection<LogEntry> Entries { get; } = new();
+    public RangeObservableCollection<LogEntry> Entries { get; } = new();
     public ICollectionView View { get; }
+
+    // Cached so the status bar never has to re-scan all rows.
+    private int _errorCount;
 
     public LogDocumentViewModel(string filePath, LogFormat format, string? customPattern)
     {
@@ -42,7 +47,14 @@ public sealed class LogDocumentViewModel : ObservableObject, IDisposable
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(750) };
         _timer.Tick += (_, _) => PollNew();
 
-        LoadInitial();
+        _ = LoadInitialAsync();
+    }
+
+    private bool _isLoading;
+    public bool IsLoading
+    {
+        get => _isLoading;
+        private set => SetField(ref _isLoading, value);
     }
 
     // ---- Filtering state -------------------------------------------------
@@ -114,20 +126,46 @@ public sealed class LogDocumentViewModel : ObservableObject, IDisposable
 
     public int TotalCount => Entries.Count;
 
-    public int VisibleCount => View.Cast<object>().Count();
+    // ListCollectionView keeps its filtered Count up to date (O(1)); avoid
+    // enumerating the whole view on every keystroke.
+    public int VisibleCount => (View as ListCollectionView)?.Count ?? Entries.Count;
 
-    public int ErrorCount =>
-        Entries.Count(e => e.LevelValue is LogLevel.Error or LogLevel.Fatal);
+    public int ErrorCount => _errorCount;
 
     public string StatusText =>
         $"{VisibleCount:N0} shown / {TotalCount:N0} total · {ErrorCount:N0} error(s)";
 
     // ---- Loading ---------------------------------------------------------
 
-    private void LoadInitial()
+    /// <summary>
+    /// Reads and parses the whole file on a background thread (so the UI stays
+    /// responsive and can show the loading overlay), then adds the rows on the
+    /// UI thread.
+    /// </summary>
+    private async Task LoadInitialAsync()
     {
-        var text = _reader.ReadNew();
-        AppendParsed(text, flush: true);
+        IsLoading = true;
+        try
+        {
+            var parsed = await Task.Run(() =>
+            {
+                var text = _reader.ReadNew();
+                var list = new List<LogEntry>(_parser.Feed(text));
+                list.AddRange(_parser.Flush());
+                return list;
+            });
+
+            // Single bulk add => the view refilters once (one Reset) instead of
+            // once per row.
+            _errorCount += parsed.Count(e => e.LevelValue is LogLevel.Error or LogLevel.Fatal);
+            Entries.AddRange(parsed);
+            NotifyStats();
+        }
+        catch (IOException) { /* file vanished or locked; nothing to show */ }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private void PollNew()
@@ -143,18 +181,25 @@ public sealed class LogDocumentViewModel : ObservableObject, IDisposable
     private void AppendParsed(string text, bool flush)
     {
         if (text.Length > 0)
-            foreach (var e in _parser.Feed(text)) Entries.Add(e);
+            foreach (var e in _parser.Feed(text)) Add(e);
         if (flush)
-            foreach (var e in _parser.Flush()) Entries.Add(e);
+            foreach (var e in _parser.Flush()) Add(e);
         NotifyStats();
+
+        void Add(LogEntry e)
+        {
+            if (e.LevelValue is LogLevel.Error or LogLevel.Fatal) _errorCount++;
+            Entries.Add(e);
+        }
     }
 
     public void Reload()
     {
         _parser.Reset();
         _reader.Reset();
+        _errorCount = 0;
         Entries.Clear();
-        LoadInitial();
+        _ = LoadInitialAsync();
     }
 
     // ---- Filter implementation ------------------------------------------
@@ -166,8 +211,9 @@ public sealed class LogDocumentViewModel : ObservableObject, IDisposable
         {
             try
             {
-                var opts = RegexOptions.Compiled;
-                if (!_matchCase) opts |= RegexOptions.IgnoreCase;
+                // No RegexOptions.Compiled here: compiling on every keystroke costs
+                // more than it saves for short-lived interactive search.
+                var opts = _matchCase ? RegexOptions.None : RegexOptions.IgnoreCase;
                 _searchRegex = new Regex(_searchText, opts);
             }
             catch (ArgumentException) { /* incomplete regex while typing — ignore */ }

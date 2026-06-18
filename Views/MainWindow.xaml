@@ -14,6 +14,7 @@
         <conv:LevelToBrushConverter x:Key="LevelToBrush"/>
         <conv:StringToVisibilityConverter x:Key="StrToVis"/>
         <conv:NullToVisibilityConverter x:Key="NullToVis"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
         <!-- ====== One log document = one tab body ====== -->
         <DataTemplate x:Key="DocumentTemplate" DataType="{x:Type vm:LogDocumentViewModel}">
@@ -69,6 +70,10 @@
                         Padding="12,5">
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource TextSecondary}"
+                                   FontSize="11.5" Margin="14,0,0,0" Text="© 2026 shahbaz.sadik"/>
+                        <Rectangle DockPanel.Dock="Right" Width="1" Fill="{StaticResource BorderBrush}"
+                                   Margin="14,1,0,1"/>
+                        <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource TextSecondary}"
                                    FontSize="11.5" Text="{Binding ParserName, StringFormat='Parser: {0}'}"/>
                         <TextBlock Foreground="{StaticResource TextSecondary}" FontSize="11.5"
                                    Text="{Binding StatusText}"/>
@@ -113,15 +118,23 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Binding="{Binding TimestampText}" Width="170">
-                                <DataGridTextColumn.Header>
+                            <DataGridTemplateColumn Width="170" ClipboardContentBinding="{Binding TimestampText}">
+                                <DataGridTemplateColumn.Header>
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource ColumnTitle}" Text="Time"/>
                                         <TextBox Style="{StaticResource FilterBox}" ToolTip="Filter by time"
                                                  Text="{Binding DataContext.FilterTime, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged, Delay=120}"/>
                                     </StackPanel>
-                                </DataGridTextColumn.Header>
-                            </DataGridTextColumn>
+                                </DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock VerticalAlignment="Center"
+                                                   beh:Highlighter.Text="{Binding TimestampText}"
+                                                   beh:Highlighter.Query="{Binding DataContext.FilterTime, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                   beh:Highlighter.Global="{Binding DataContext.SearchText, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTemplateColumn Width="92">
                                 <DataGridTemplateColumn.Header>
                                     <StackPanel>
@@ -141,61 +154,87 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Binding="{Binding Thread}" Width="70">
-                                <DataGridTextColumn.Header>
+                            <DataGridTemplateColumn Width="70" ClipboardContentBinding="{Binding Thread}">
+                                <DataGridTemplateColumn.Header>
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource ColumnTitle}" Text="Thread"/>
                                         <TextBox Style="{StaticResource FilterBox}" ToolTip="Filter by thread"
                                                  Text="{Binding DataContext.FilterThread, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged, Delay=120}"/>
                                     </StackPanel>
-                                </DataGridTextColumn.Header>
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="#FF6E7681"/>
-                                        <Setter Property="HorizontalAlignment" Value="Right"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Binding="{Binding CorrelationId}" Width="190">
-                                <DataGridTextColumn.Header>
+                                </DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Foreground="#FF6E7681" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                   beh:Highlighter.Text="{Binding Thread}"
+                                                   beh:Highlighter.Query="{Binding DataContext.FilterThread, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                   beh:Highlighter.Global="{Binding DataContext.SearchText, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Width="190" ClipboardContentBinding="{Binding CorrelationId}">
+                                <DataGridTemplateColumn.Header>
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource ColumnTitle}" Text="Correlation ID"/>
                                         <TextBox Style="{StaticResource FilterBox}" ToolTip="Filter by correlation id"
                                                  Text="{Binding DataContext.FilterCorrelationId, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged, Delay=120}"/>
                                     </StackPanel>
-                                </DataGridTextColumn.Header>
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="#FF56A8F5"/>
-                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Binding="{Binding Logger}" Width="220">
-                                <DataGridTextColumn.Header>
+                                </DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Foreground="#FF56A8F5" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   beh:Highlighter.Text="{Binding CorrelationId}"
+                                                   beh:Highlighter.Query="{Binding DataContext.FilterCorrelationId, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                   beh:Highlighter.Global="{Binding DataContext.SearchText, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Width="220" ClipboardContentBinding="{Binding Logger}">
+                                <DataGridTemplateColumn.Header>
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource ColumnTitle}" Text="Logger"/>
                                         <TextBox Style="{StaticResource FilterBox}" ToolTip="Filter by logger"
                                                  Text="{Binding DataContext.FilterLogger, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged, Delay=120}"/>
                                     </StackPanel>
-                                </DataGridTextColumn.Header>
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
-                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                                </DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Foreground="{StaticResource TextSecondary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   beh:Highlighter.Text="{Binding Logger}"
+                                                   beh:Highlighter.Query="{Binding DataContext.FilterLogger, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                   beh:Highlighter.Global="{Binding DataContext.SearchText, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <!-- Sizes to the content; use the horizontal scrollbar to pan left-right. -->
-                            <DataGridTextColumn Binding="{Binding Message}" Width="Auto" MinWidth="400">
-                                <DataGridTextColumn.Header>
+                            <DataGridTemplateColumn Width="Auto" MinWidth="400" ClipboardContentBinding="{Binding Message}">
+                                <DataGridTemplateColumn.Header>
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource ColumnTitle}" Text="Message"/>
                                         <TextBox Style="{StaticResource FilterBox}" ToolTip="Filter by message text"
                                                  Text="{Binding DataContext.FilterMessage, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged, Delay=120}"/>
                                     </StackPanel>
-                                </DataGridTextColumn.Header>
-                            </DataGridTextColumn>
+                                </DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock VerticalAlignment="Center"
+                                                   beh:Highlighter.Text="{Binding Message}"
+                                                   beh:Highlighter.Query="{Binding DataContext.FilterMessage, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                   beh:Highlighter.Global="{Binding DataContext.SearchText, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                                                    <Style.Triggers>
+                                                        <!-- Rows that carry an exception / stack trace stand out -->
+                                                        <DataTrigger Binding="{Binding HasException}" Value="True">
+                                                            <Setter Property="Foreground" Value="#FFFF8A7A"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
 
@@ -244,6 +283,22 @@
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
+
+                    <!-- Loading overlay (shown while a file is being read/parsed) -->
+                    <Grid Grid.Row="0" Grid.RowSpan="3" Panel.ZIndex="10"
+                          Background="#D90D1117"
+                          Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Image Source="/Assets/logreader.png" Width="72" Height="72"
+                                   HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <TextBlock Text="Uploading file…" Margin="0,16,0,0"
+                                       HorizontalAlignment="Center" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimary}" FontSize="14"/>
+                            <TextBlock Text="{Binding Title}" Margin="0,3,0,0"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextSecondary}" FontSize="11.5"/>
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </DockPanel>
         </DataTemplate>
@@ -271,20 +326,40 @@
                         SelectedItem="{Binding Active}"
                         Background="{StaticResource WindowBg}" BorderThickness="0"
                         ContentTemplate="{StaticResource DocumentTemplate}">
+                <!-- Custom template: the default TabControl uses a wrapping TabPanel
+                     (ignores ItemsPanel), so we host the headers in a single-row
+                     UniformGrid that shrinks the tabs to share the width. -->
+                <TabControl.Template>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <UniformGrid Grid.Row="0" Rows="1" IsItemsHost="True"
+                                         Background="{StaticResource WindowBg}"/>
+                            <Border Grid.Row="1" Background="{StaticResource WindowBg}">
+                                <ContentPresenter x:Name="PART_SelectedContentHost"
+                                                  ContentSource="SelectedContent"/>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </TabControl.Template>
                 <TabControl.ItemContainerStyle>
                     <Style TargetType="TabItem" BasedOn="{StaticResource ModernTabItem}"/>
                 </TabControl.ItemContainerStyle>
                 <TabControl.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
-                            <Button Content="✕" Margin="10,0,0,0" Padding="4,0" FontSize="11"
-                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                        <DockPanel LastChildFill="True">
+                            <Button DockPanel.Dock="Right" Content="✕" Margin="8,0,0,0" Padding="4,0"
+                                    FontSize="11" Background="Transparent" BorderThickness="0" Cursor="Hand"
                                     Foreground="{StaticResource TextSecondary}"
                                     Command="{Binding DataContext.CloseCommand,
                                               RelativeSource={RelativeSource AncestorType=Window}}"
                                     CommandParameter="{Binding}"/>
-                        </StackPanel>
+                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" ToolTip="{Binding FilePath}"/>
+                        </DockPanel>
                     </DataTemplate>
                 </TabControl.ItemTemplate>
             </TabControl>
