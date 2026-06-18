@@ -14,6 +14,7 @@
     <SolidColorBrush x:Key="AccentHover" Color="#FF4493F8"/>
     <SolidColorBrush x:Key="RowAlt" Color="#FF12161D"/>
     <SolidColorBrush x:Key="Selection" Color="#FF1F3350"/>
+    <SolidColorBrush x:Key="SelectionHover" Color="#FF2A476B"/>
     <SolidColorBrush x:Key="LiveGreen" Color="#FF3FB950"/>
     <SolidColorBrush x:Key="ScrollThumb" Color="#FF7EE0A0"/>
     <SolidColorBrush x:Key="ScrollThumbHover" Color="#FFA6EEC0"/>
@@ -50,6 +51,30 @@
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Minimal text "link" button (used in the Levels dropdown) -->
+    <Style x:Key="LinkButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="Transparent" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource AccentHover}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -182,21 +207,21 @@
 
     <Style x:Key="ModernRow" TargetType="DataGridRow">
         <Style.Triggers>
-            <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="{StaticResource Selection}"/>
-            </Trigger>
+            <!-- Hover first; selection (and selection+hover) declared after so they
+                 win when both are true — keeps the selected row visible on hover. -->
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="Background" Value="{StaticResource PanelBg2}"/>
             </Trigger>
-            <!-- Gentle fade-in as rows appear (e.g. new live-tail lines) -->
-            <EventTrigger RoutedEvent="FrameworkElement.Loaded">
-                <BeginStoryboard>
-                    <Storyboard>
-                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                         From="0" To="1" Duration="0:0:0.22"/>
-                    </Storyboard>
-                </BeginStoryboard>
-            </EventTrigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource Selection}"/>
+            </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsSelected" Value="True"/>
+                    <Condition Property="IsMouseOver" Value="True"/>
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" Value="{StaticResource SelectionHover}"/>
+            </MultiTrigger>
         </Style.Triggers>
     </Style>
 

@@ -25,6 +25,9 @@ public sealed class LogEntry
     /// <summary>Stack trace / exception block or any continuation lines.</summary>
     public string? Exception { get; init; }
 
+    /// <summary>True when this entry carries an exception / stack-trace block.</summary>
+    public bool HasException => !string.IsNullOrWhiteSpace(Exception);
+
     /// <summary>The original unparsed text for this record.</summary>
     public string Raw { get; init; } = string.Empty;
 

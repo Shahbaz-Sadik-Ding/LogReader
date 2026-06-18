@@ -1,50 +1,56 @@
 # LogReader
 
-A modern WPF desktop viewer for **log4net** log files (.NET 8). Open plain-text
-`PatternLayout` logs or `XmlLayoutSchemaLog4j` XML logs, then search, filter and
-live-tail them with a clean dark UI.
+**A fast, modern log4net log viewer for Windows.** LogReader is a free, open-source
+desktop app for reading [log4net](https://logging.apache.org/log4net/) log files —
+both plain-text `PatternLayout` logs and `XmlLayoutSchemaLog4j` XML logs. It opens
+large files quickly, follows them live as they grow, and gives you fast search,
+per-column filtering, and search highlighting in a clean dark UI.
+
+Built with WPF on .NET 8. Contributions and issues are welcome.
 
 ## Features
 
 - **Two formats, auto-detected** — plain-text log4net (`PatternLayout`) and log4j
-  XML. Override detection from the toolbar (`Auto` / `Plain text` / `XML`).
-- **Quick search** — substring or **regex**, with optional case sensitivity.
-  Searches the full raw record, including folded stack traces.
-- **Level filters** — toggle TRACE / DEBUG / INFO / WARN / ERROR / FATAL pills.
-- **Live tail** — watches the file and appends new entries as your app writes
-  them. Survives log rollover/truncation.
-- **Multi-file tabs** — open several logs at once; drag & drop files onto the
-  window. Close with the ✕ or `Ctrl+W`.
-- **Stack-trace folding** — continuation lines are attached to their parent
-  entry and shown in the detail pane.
-- **Colour-coded levels** and a virtualised grid that stays responsive on large
-  files.
+  XML; the format is detected automatically from the file content.
+- **Quick search** — substring or **regex**, with optional case sensitivity, across
+  the full record (including folded stack traces), with matches highlighted in the rows.
+- **Per-column filters** — a filter box under each column header, plus a Level
+  dropdown with TRACE / DEBUG / INFO / WARN / ERROR / FATAL (and Select all / Clear all).
+- **Live tail** — watches the file and appends new entries as your app writes them,
+  auto-scrolling to the newest line. Survives log rollover/truncation.
+- **Multi-file tabs** — open several logs at once (or drag & drop them); tabs stay on
+  one row and shrink to fit.
+- **Stack-trace folding** — continuation lines fold into their parent entry and show in
+  the detail pane; rows with an exception are colour-flagged.
+- **Copy** — right-click a row to copy any field, `Ctrl+C` for the whole row, or select
+  text in the detail pane.
+- **Fast on big files** — virtualised, bulk-loaded grid that stays responsive on
+  40k+ line logs.
 
-## Requirements
+## Download
 
-- Windows
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+Grab the latest **`LogReader.exe`** from the [Releases page](../../releases). It's a
+single self-contained executable — **no .NET install and no admin rights required**,
+because the runtime is bundled in. Double-click to run on any Windows 10/11 PC.
 
-## Build & run
+> The app is unsigned, so Windows SmartScreen may show "Windows protected your PC" on
+> first launch — click **More info → Run anyway**.
+
+## Build from source
+
+Requirements: [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) on Windows.
 
 ```powershell
+git clone https://github.com/<you>/LogReader.git
 cd LogReader
-dotnet restore
 dotnet run
 ```
 
-## Build a shareable EXE
-
-Run the helper script from the project folder:
+To produce the single self-contained `dist\LogReader.exe`:
 
 ```powershell
 ./publish.ps1
 ```
-
-It produces a single self-contained `dist\LogReader.exe` (~150 MB) and opens
-the folder. Send that one file to colleagues — they double-click it to run on
-any Windows 10/11 PC. **No .NET install and no admin rights required**, because
-the runtime is bundled inside the exe.
 
 (Equivalent manual command:)
 
@@ -54,74 +60,53 @@ dotnet publish -c Release -r win-x64 --self-contained true `
   -p:EnableCompressionInSingleFile=true -o dist
 ```
 
-## Put it on GitHub
+## Usage
 
-One-time setup (from the project folder):
-
-```powershell
-git init
-git add .
-git commit -m "Initial commit: LogReader log4net viewer"
-git branch -M main
-git remote add origin https://github.com/<you>/LogReader.git
-git push -u origin main
-```
-
-You can create the empty `LogReader` repo on github.com first, or with the
-GitHub CLI: `gh repo create LogReader --private --source . --push`.
-
-## Release the EXE to colleagues (automated)
-
-A GitHub Actions workflow (`.github/workflows/release.yml`) builds the EXE in
-the cloud and publishes it to the repo's **Releases** page whenever you push a
-version tag:
+Open a log from **Open log(s)…**, by dragging files onto the window, or by passing
+paths on the command line:
 
 ```powershell
-git tag v1.0.0
-git push origin v1.0.0
+LogReader.exe "C:\Logs\app.log" "C:\Logs\other.log"
 ```
 
-A minute later, the EXE appears at
-`https://github.com/<you>/LogReader/releases` — colleagues just download
-`LogReader.exe` from there and run it. Bump the tag (`v1.0.1`, `v1.1.0`, …) for
-each new version.
+Sample logs to try are in `samples/` (`sample-app.log`, `sample-app-log4j.xml`,
+`sample-titanadmin.log`).
 
-> First-time note: the workflow needs Actions enabled (default for new repos).
-> No secrets to configure — it uses the built-in `GITHUB_TOKEN`.
+### PowerShell helpers
 
-### What colleagues do
+`LogReader.Profile.ps1` provides `watch` / `logreader` functions. Dot-source it from
+your `$PROFILE`:
 
-1. Open the repo's **Releases** page (or you send them `LogReader.exe`).
-2. Download `LogReader.exe`.
-3. Double-click it. Windows SmartScreen may show "Windows protected your PC"
-   for an unsigned app — click **More info → Run anyway** (one-time per file).
-4. Open a log via the toolbar or drag a `.log` file onto the window.
+```powershell
+. "C:\Source\LogReader\LogReader.Profile.ps1"
+watch MyProduct   # opens every .log in C:\Logs\MyProduct\MyProduct
+```
 
-## Try it
+Set `$LogReaderExe` in that file to wherever your `LogReader.exe` lives.
 
-Sample logs are in `samples/`:
+### Keyboard shortcuts
 
-- `sample-app.log` — plain-text log4net output (with a multi-line exception)
-- `sample-app-log4j.xml` — log4j XML output
-
-Open either from the toolbar or drag it onto the window.
+| Shortcut | Action            |
+|----------|-------------------|
+| `Ctrl+O` | Open log file(s)  |
+| `Ctrl+W` | Close active tab  |
 
 ## Configuring the parse pattern
 
-The default plain-text regex matches the layout below, where the **correlation
-id** and **user/identity** brackets are optional:
+The default plain-text regex matches the layout below, where the **correlation id**
+and **user/identity** brackets are optional:
 
 ```
 %date [%thread] %-5level [%correlationId] [%user] %logger - %message%newline
-2026-05-19 12:49:51,299 [12] DEBUG [98KDKDoPGXM6lPfFKJSzBV] [user@ding.com] Common.Web.UI... - message
-2026-06-17 09:14:02,131 [15] ERROR Ding.Trading.Settlement - Settlement failed   (no brackets — also matches)
+2026-05-19 12:49:51,299 [12] DEBUG [98KDKDoPGXM6lPfFKJSzBV] [user@example.com] Common.Web.UI... - message
+2026-06-17 09:14:02,131 [15] ERROR My.Logger - Something failed   (no brackets — also matches)
 ```
 
 If your log4net `conversionPattern` differs, edit the regex in
 `Parsing/PlainTextLogParser.cs` (`DefaultPattern`). It uses .NET named groups:
-`timestamp`, `thread`, `level`, `correlationId`, `user`, `logger`, `message`.
-Any line that doesn't match is treated as a continuation of the previous entry
-(so multi-line messages and stack traces stay intact).
+`timestamp`, `thread`, `level`, `correlationId`, `user`, `logger`, `message`. Any line
+that doesn't match is treated as a continuation of the previous entry (so multi-line
+messages and stack traces stay intact).
 
 To emit XML that this app reads, configure log4net with:
 
@@ -136,16 +121,84 @@ LogReader/
 ├─ Models/         LogEntry, LogLevel
 ├─ Parsing/        ILogParser, PlainTextLogParser, XmlLogParser, factory
 ├─ Services/       TailReader (incremental/shared-handle file reads)
-├─ ViewModels/     MainViewModel, LogDocumentViewModel, RelayCommand
+├─ ViewModels/     MainViewModel, LogDocumentViewModel, RangeObservableCollection
+├─ Behaviors/      AutoScrollToEnd, Highlighter
 ├─ Converters/     level→brush, null/string→visibility
 ├─ Themes/         DarkTheme.xaml
 ├─ Views/          MainWindow
 └─ samples/        example logs
 ```
 
-## Keyboard shortcuts
+## Contributing
 
-| Shortcut | Action            |
-|----------|-------------------|
-| `Ctrl+O` | Open log file(s)  |
-| `Ctrl+W` | Close active tab  |
+Issues and pull requests are welcome. Build from source as above (`dotnet run`), and
+please keep changes focused. For UI work, the theme lives in `Themes/DarkTheme.xaml`
+and the log model/parsing is under `Models/` and `Parsing/`.
+
+## License
+
+Open source under the MIT License — add a `LICENSE` file with your details.
+
+---
+
+# Release notes
+
+## v1.2.0
+
+**Parsing**
+- Recognises the extended log4net layout with **correlation id** and **user/identity**
+  fields: `%date [%thread] %-5level [%correlationId] [%user] %logger - %message`
+  (both bracketed fields optional, so simpler layouts still parse).
+- Padded thread ids (e.g. `[ 1]`) are trimmed; `[correlation id missing]` and empty
+  `[]` are handled.
+
+**Grid & columns**
+- New **Thread** and **Correlation ID** columns.
+- **Per-column filters** — a filter box under every column header that filters as you
+  type and resizes with its column.
+- **Level filter dropdown** in the Level header with **Select all / Clear all**.
+- **Search highlighting** — matches from the global search and column filters are
+  highlighted in glowing orange inside the rows (Level excluded).
+- Rows carrying an **exception / stack trace** show their message text in a distinct colour.
+- Selected rows stay clearly highlighted even while hovered.
+- Simple left-right **horizontal scrolling** with no auto-jump on click/arrow-keys;
+  smooth pixel-based vertical scrolling.
+
+**Copy**
+- Right-click a row to **Copy** message / correlation id / logger / timestamp / whole row;
+  `Ctrl+C` copies the selected row.
+- Detail/preview pane text is selectable for copying arbitrary substrings.
+
+**UI / theme**
+- Green app icon and a **dark title bar**.
+- Single-row tabs that shrink to share the width (no more wrapping), with rounded
+  corners and a selected-tab accent.
+- Light-green, slim scrollbars; dark, rounded context menus.
+- **Live tail** — glowing button while active and auto-scroll to the newest line.
+- A loading screen (app logo + "Uploading file…") while large files open.
+
+**Launching**
+- Accepts **file paths as command-line arguments**, enabling the `watch` / `logreader`
+  PowerShell helpers (`LogReader.Profile.ps1`).
+
+**Performance**
+- Bulk-loads parsed rows in one operation (single view refresh) instead of one
+  notification per row — much faster for large files.
+- O(1) visible/error counts in the status bar (no full re-scan per keystroke); lighter
+  interactive search; removed the per-row fade that hurt scrolling.
+
+## v1.0.0
+
+Initial release.
+
+- View **log4net** logs in two formats, **auto-detected**: plain-text `PatternLayout`
+  and `XmlLayoutSchemaLog4j` XML.
+- **Quick search** — substring or regex, with optional case sensitivity, across the full
+  record including folded stack traces.
+- **Level filters** for TRACE / DEBUG / INFO / WARN / ERROR / FATAL.
+- **Live tail** that appends new lines as the file grows and survives rollover/truncation.
+- **Multi-file tabs**, with drag & drop and `Ctrl+W` to close.
+- **Stack-trace folding** — continuation lines attach to their parent entry and show in
+  the detail pane.
+- Colour-coded levels and a virtualised grid for large files, in a dark UI.
+- Single self-contained Windows executable.

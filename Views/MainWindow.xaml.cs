@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -44,6 +45,13 @@ public partial class MainWindow : Window
         var hwnd = new WindowInteropHelper(this).Handle;
         EnableDarkTitleBar(hwnd);
         AllowDragDropWhenElevated(hwnd);
+    }
+
+    /// <summary>Opens one or more log files (used for command-line arguments).</summary>
+    public void OpenFiles(IEnumerable<string> paths)
+    {
+        foreach (var path in paths)
+            _vm.OpenFile(path);
     }
 
     // -------- Dark (immersive) native title bar --------
@@ -113,6 +121,24 @@ public partial class MainWindow : Window
         if (_levelPopup != null) _levelPopup.IsOpen = false;
 
         var panel = new StackPanel();
+
+        // Quick "select all / clear" row.
+        void SetAll(bool v)
+        {
+            doc.ShowTrace = v; doc.ShowDebug = v; doc.ShowInfo = v;
+            doc.ShowWarn = v; doc.ShowError = v; doc.ShowFatal = v;
+        }
+        var actions = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
+        actions.Children.Add(MakeLinkButton("Select all", () => SetAll(true)));
+        actions.Children.Add(MakeLinkButton("Clear all", () => SetAll(false)));
+        panel.Children.Add(actions);
+        panel.Children.Add(new Border
+        {
+            Height = 1,
+            Background = (Brush)FindResource("BorderBrush"),
+            Margin = new Thickness(0, 0, 0, 6)
+        });
+
         AddLevelCheck(panel, "TRACE", nameof(LogDocumentViewModel.ShowTrace), doc);
         AddLevelCheck(panel, "DEBUG", nameof(LogDocumentViewModel.ShowDebug), doc);
         AddLevelCheck(panel, "INFO",  nameof(LogDocumentViewModel.ShowInfo),  doc);
@@ -141,6 +167,18 @@ public partial class MainWindow : Window
         };
     }
 
+    private Button MakeLinkButton(string text, Action onClick)
+    {
+        var btn = new Button
+        {
+            Content = text,
+            Style = (Style)FindResource("LinkButton"),
+            Margin = new Thickness(0, 0, 14, 0)
+        };
+        btn.Click += (_, _) => onClick();
+        return btn;
+    }
+
     private void AddLevelCheck(Panel panel, string text, string property, object source)
     {
         var cb = new CheckBox
@@ -159,19 +197,35 @@ public partial class MainWindow : Window
     // Right-click selects the row under the cursor before the menu opens.
     private void LogGrid_RightButtonDown(object sender, MouseButtonEventArgs e)
     {
-        var dep = e.OriginalSource as DependencyObject;
-        while (dep != null && dep is not DataGridRow)
-            dep = VisualTreeHelper.GetParent(dep);
-        if (dep is DataGridRow row)
+        var node = e.OriginalSource as DependencyObject;
+        while (node != null && node is not DataGridRow)
+            node = GetParentSafe(node);
+        if (node is DataGridRow row)
             row.IsSelected = true;
     }
+
+    // Walks up the tree tolerating text elements (Run/Span) inside highlighted
+    // cells, which are ContentElements — not Visuals — so VisualTreeHelper alone
+    // would throw on them.
+    private static DependencyObject? GetParentSafe(DependencyObject node) => node switch
+    {
+        Visual or System.Windows.Media.Media3D.Visual3D => VisualTreeHelper.GetParent(node),
+        FrameworkContentElement fce => fce.Parent,
+        _ => LogicalTreeHelper.GetParent(node)
+    };
 
     private LogEntry? CurrentEntry => _vm.Active?.SelectedEntry;
 
     private static void SetClipboard(string? text)
     {
         if (string.IsNullOrEmpty(text)) return;
-        try { Clipboard.SetText(text); } catch { /* clipboard momentarily locked */ }
+        // Retry: the clipboard is a shared OS resource and can be briefly locked
+        // by another process, which would otherwise throw.
+        for (int attempt = 0; attempt < 5; attempt++)
+        {
+            try { Clipboard.SetDataObject(text, true); return; }
+            catch { System.Threading.Thread.Sleep(40); }
+        }
     }
 
     private void CopyMessage_Click(object sender, RoutedEventArgs e) => SetClipboard(CurrentEntry?.Message);
