@@ -1,0 +1,48 @@
+name: Build & Release
+
+# Build the EXE and publish a GitHub Release whenever you push a version tag,
+# e.g.:  git tag v1.0.0  &&  git push origin v1.0.0
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # needed to create the Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish single-file EXE
+        run: >
+          dotnet publish LogReader.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -p:DebugType=None
+          -o dist
+
+      - name: Upload EXE as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LogReader-win-x64
+          path: dist/LogReader.exe
+
+      - name: Create GitHub Release with the EXE attached
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/LogReader.exe
+          generate_release_notes: true

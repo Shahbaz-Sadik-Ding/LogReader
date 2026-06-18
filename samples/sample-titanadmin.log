@@ -1,0 +1,10 @@
+2026-05-19 12:49:51,299 [12] DEBUG [98KDKDoPGXM6lPfFKJSzBV] [] Common.Web.UI.Containers.ContainerControllerActivator - I used container App-4362712f to create controller ProviderController with hashcode 6607859
+2026-05-19 12:49:51,318 [12] INFO  [98KDKDoPGXM6lPfFKJSzBV] [SG-TitanAdminSuperAdmin@ding-dev.com] Common.Scaffolding.Logging.Timing.RequestTimings - Finished [DELETE] [http] request to uri [/Provider],[200]. Timer is at [26]ms.
+2026-05-19 12:49:52,452 [ 7] INFO  [IR4mW31eauL5n4CmtZICDc] [] Common.PortfolioClient.PortfolioS3Client - Portfolio S3 client initialized with bucket: dingdev-portfolio
+2026-06-17 15:19:40,472 [ 1] WARN  [correlation id missing] [] TitanAdmin.Persistence.Dal.Queries.AdminReferenceData - Exception in PrepareProviderSupplies for AdminReferenceData. Provider 4898 not found in Mongo.
+2026-06-17 15:20:11,004 [ 9] ERROR [8Kne5I6RSyM7Wt2RM74BQz] [SG-TitanAdminFinance@ding-dev.com] TitanAdmin.Services.Settlement - Settlement failed for batch 5521
+System.TimeoutException: The operation has timed out after 30000ms.
+   at TitanAdmin.Services.Settlement.SettlementClient.PostAsync(SettlementRequest req)
+   at TitanAdmin.Services.Settlement.SettlementService.SettleAsync(Int64 batchId)
+2026-06-17 15:20:11,310 [ 9] WARN  [8Kne5I6RSyM7Wt2RM74BQz] [SG-TitanAdminFinance@ding-dev.com] TitanAdmin.Services.Settlement - Scheduling retry 1/3 for batch 5521 in 5s
+2026-06-17 15:20:16,540 [10] INFO  [8Kne5I6RSyM7Wt2RM74BQz] [SG-TitanAdminFinance@ding-dev.com] TitanAdmin.Services.Settlement - Retry succeeded for batch 5521

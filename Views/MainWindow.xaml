@@ -1,0 +1,305 @@
+<Window x:Class="LogReader.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:LogReader.Converters"
+        xmlns:beh="clr-namespace:LogReader.Behaviors"
+        xmlns:vm="clr-namespace:LogReader.ViewModels"
+        Title="LogReader — log4net viewer" Height="760" Width="1240"
+        Icon="/Assets/logreader.ico"
+        Background="{StaticResource WindowBg}"
+        AllowDrop="True" PreviewDrop="Window_Drop" PreviewDragOver="Window_DragOver"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+
+    <Window.Resources>
+        <conv:LevelToBrushConverter x:Key="LevelToBrush"/>
+        <conv:StringToVisibilityConverter x:Key="StrToVis"/>
+        <conv:NullToVisibilityConverter x:Key="NullToVis"/>
+
+        <!-- ====== One log document = one tab body ====== -->
+        <DataTemplate x:Key="DocumentTemplate" DataType="{x:Type vm:LogDocumentViewModel}">
+            <DockPanel>
+
+                <!-- Filter / search bar -->
+                <Border DockPanel.Dock="Top" Background="{StaticResource PanelBg}"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1"
+                        Padding="12,10">
+                    <StackPanel>
+                        <DockPanel LastChildFill="True">
+                            <ToggleButton DockPanel.Dock="Right" Style="{StaticResource LiveTailToggle}"
+                                          Margin="8,0,0,0"
+                                          IsChecked="{Binding LiveTail}"
+                                          Content="● LIVE TAIL"/>
+                            <Grid>
+                                <TextBox Style="{StaticResource ModernTextBox}"
+                                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=150}"/>
+                                <TextBlock Text="Search messages, loggers, stack traces…  (Ctrl+F)"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           Margin="10,0,0,0" VerticalAlignment="Center"
+                                           IsHitTestVisible="False">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SearchText}" Value="">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </DockPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <CheckBox Style="{StaticResource ModernCheckBox}" Content="Regex"
+                                      IsChecked="{Binding UseRegex}"/>
+                            <CheckBox Style="{StaticResource ModernCheckBox}" Content="Match case"
+                                      IsChecked="{Binding MatchCase}"/>
+                            <Rectangle Width="1" Fill="{StaticResource BorderBrush}" Margin="6,2,12,2"/>
+                            <TextBlock Foreground="{StaticResource TextSecondary}" FontSize="11.5"
+                                       VerticalAlignment="Center"
+                                       Text="Filter any column from the box under its header — Level has a dropdown."/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Status strip -->
+                <Border DockPanel.Dock="Bottom" Background="{StaticResource PanelBg}"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0"
+                        Padding="12,5">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource TextSecondary}"
+                                   FontSize="11.5" Text="{Binding ParserName, StringFormat='Parser: {0}'}"/>
+                        <TextBlock Foreground="{StaticResource TextSecondary}" FontSize="11.5"
+                                   Text="{Binding StatusText}"/>
+                    </DockPanel>
+                </Border>
+
+                <!-- Grid + detail pane -->
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="3*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto" MinHeight="0"/>
+                    </Grid.RowDefinitions>
+
+                    <DataGrid Grid.Row="0" ItemsSource="{Binding View}"
+                              SelectedItem="{Binding SelectedEntry}"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                              beh:AutoScrollToEnd.IsEnabled="{Binding LiveTail}"
+                              ClipboardCopyMode="ExcludeHeader"
+                              CanUserSortColumns="False"
+                              CanUserReorderColumns="False"
+                              PreviewMouseRightButtonDown="LogGrid_RightButtonDown"
+                              Style="{StaticResource ModernDataGrid}"
+                              ColumnHeaderStyle="{StaticResource ModernColumnHeader}"
+                              RowStyle="{StaticResource ModernRow}"
+                              CellStyle="{StaticResource ModernCell}">
+                        <DataGrid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Copy message"        Click="CopyMessage_Click"/>
+                                <MenuItem Header="Copy correlation ID" Click="CopyCorrelationId_Click"/>
+                                <MenuItem Header="Copy logger"         Click="CopyLogger_Click"/>
+                                <MenuItem Header="Copy timestamp"      Click="CopyTimestamp_Click"/>
+                                <Separator/>
+                                <MenuItem Header="Copy whole row"      Click="CopyRow_Click"/>
+                            </ContextMenu>
+                        </DataGrid.ContextMenu>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="#" Binding="{Binding LineNumber}" Width="56">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#FF6E7681"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding TimestampText}" Width="170">
+                                <DataGridTextColumn.Header>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource ColumnTitle}" Text="Time"/>
+                                        <TextBox Style="{StaticResource FilterBox}" ToolTip="Filter by time"
+                                                 Text="{Binding DataContext.FilterTime, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged, Delay=120}"/>
+                                    </StackPanel>
+                                </DataGridTextColumn.Header>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Width="92">
+                                <DataGridTemplateColumn.Header>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource ColumnTitle}" Text="Level"/>
+                                        <Button Style="{StaticResource FilterDropButton}"
+                                                Content="Levels ▾" Click="LevelFilter_Click"/>
+                                    </StackPanel>
+                                </DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="4" Padding="6,1" HorizontalAlignment="Left"
+                                                BorderThickness="1"
+                                                BorderBrush="{Binding LevelValue, Converter={StaticResource LevelToBrush}}">
+                                            <TextBlock Text="{Binding Level}" FontWeight="SemiBold" FontSize="11"
+                                                       Foreground="{Binding LevelValue, Converter={StaticResource LevelToBrush}}"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Binding="{Binding Thread}" Width="70">
+                                <DataGridTextColumn.Header>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource ColumnTitle}" Text="Thread"/>
+                                        <TextBox Style="{StaticResource FilterBox}" ToolTip="Filter by thread"
+                                                 Text="{Binding DataContext.FilterThread, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged, Delay=120}"/>
+                                    </StackPanel>
+                                </DataGridTextColumn.Header>
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#FF6E7681"/>
+                                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding CorrelationId}" Width="190">
+                                <DataGridTextColumn.Header>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource ColumnTitle}" Text="Correlation ID"/>
+                                        <TextBox Style="{StaticResource FilterBox}" ToolTip="Filter by correlation id"
+                                                 Text="{Binding DataContext.FilterCorrelationId, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged, Delay=120}"/>
+                                    </StackPanel>
+                                </DataGridTextColumn.Header>
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#FF56A8F5"/>
+                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Binding="{Binding Logger}" Width="220">
+                                <DataGridTextColumn.Header>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource ColumnTitle}" Text="Logger"/>
+                                        <TextBox Style="{StaticResource FilterBox}" ToolTip="Filter by logger"
+                                                 Text="{Binding DataContext.FilterLogger, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged, Delay=120}"/>
+                                    </StackPanel>
+                                </DataGridTextColumn.Header>
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+                                        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <!-- Sizes to the content; use the horizontal scrollbar to pan left-right. -->
+                            <DataGridTextColumn Binding="{Binding Message}" Width="Auto" MinWidth="400">
+                                <DataGridTextColumn.Header>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource ColumnTitle}" Text="Message"/>
+                                        <TextBox Style="{StaticResource FilterBox}" ToolTip="Filter by message text"
+                                                 Text="{Binding DataContext.FilterMessage, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged, Delay=120}"/>
+                                    </StackPanel>
+                                </DataGridTextColumn.Header>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <GridSplitter Grid.Row="1" Height="3" HorizontalAlignment="Stretch"
+                                  Background="{StaticResource BorderBrush}"
+                                  Visibility="{Binding SelectedEntry, Converter={StaticResource NullToVis}, ConverterParameter=invert}"/>
+
+                    <Border Grid.Row="2" Background="{StaticResource PanelBg2}" MaxHeight="260"
+                            Visibility="{Binding SelectedEntry, Converter={StaticResource NullToVis}, ConverterParameter=invert}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14,10">
+                            <StackPanel>
+                                <!-- Tip: select any text below and Ctrl+C, or right-click a row to copy a field -->
+                                <WrapPanel Margin="0,0,0,8">
+                                    <TextBlock Text="{Binding SelectedEntry.TimestampText, StringFormat='🕑 {0}'}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,0,16,0"/>
+                                    <TextBlock Text="{Binding SelectedEntry.Level, StringFormat='● {0}'}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,0,16,0"/>
+                                    <TextBlock Text="{Binding SelectedEntry.Thread, StringFormat='thread {0}'}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,0,16,0"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,16,0"
+                                                Visibility="{Binding SelectedEntry.CorrelationId, Converter={StaticResource StrToVis}}">
+                                        <TextBlock Text="corr " Foreground="{StaticResource TextSecondary}"/>
+                                        <TextBox Style="{StaticResource SelectableText}" TextWrapping="NoWrap"
+                                                 Foreground="#FF56A8F5"
+                                                 Text="{Binding SelectedEntry.CorrelationId, Mode=OneWay}"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,16,0"
+                                                Visibility="{Binding SelectedEntry.User, Converter={StaticResource StrToVis}}">
+                                        <TextBlock Text="user " Foreground="{StaticResource TextSecondary}"/>
+                                        <TextBox Style="{StaticResource SelectableText}" TextWrapping="NoWrap"
+                                                 Foreground="{StaticResource TextSecondary}"
+                                                 Text="{Binding SelectedEntry.User, Mode=OneWay}"/>
+                                    </StackPanel>
+                                </WrapPanel>
+                                <TextBox Style="{StaticResource SelectableText}" Foreground="{StaticResource TextSecondary}"
+                                         FontSize="11.5" Margin="0,0,0,8"
+                                         Text="{Binding SelectedEntry.Logger, Mode=OneWay}"/>
+                                <TextBox Style="{StaticResource SelectableText}"
+                                         FontFamily="Cascadia Mono, Consolas, monospace"
+                                         Text="{Binding SelectedEntry.Message, Mode=OneWay}"/>
+                                <TextBox Style="{StaticResource SelectableText}" Margin="0,10,0,0"
+                                         Foreground="#FFF85149" FontSize="12"
+                                         FontFamily="Cascadia Mono, Consolas, monospace"
+                                         Text="{Binding SelectedEntry.Exception, Mode=OneWay}"
+                                         Visibility="{Binding SelectedEntry.Exception, Converter={StaticResource StrToVis}}"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </DockPanel>
+        </DataTemplate>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource PanelBg}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="12,10">
+            <DockPanel LastChildFill="False">
+                <TextBlock Text="LogReader" FontSize="16" FontWeight="Bold"
+                           VerticalAlignment="Center" Margin="2,0,18,0"/>
+                <Button Style="{StaticResource AccentButton}" Content="Open log(s)…"
+                        Command="{Binding OpenCommand}"/>
+                <Button Style="{StaticResource ModernButton}" Content="Reload" Margin="8,0,0,0"
+                        Command="{Binding ReloadCommand}"/>
+                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
+                           Foreground="{StaticResource TextSecondary}" FontSize="11.5"
+                           Text="Drag &amp; drop log files here"/>
+            </DockPanel>
+        </Border>
+
+        <Grid>
+            <TabControl ItemsSource="{Binding Documents}"
+                        SelectedItem="{Binding Active}"
+                        Background="{StaticResource WindowBg}" BorderThickness="0"
+                        ContentTemplate="{StaticResource DocumentTemplate}">
+                <TabControl.ItemContainerStyle>
+                    <Style TargetType="TabItem" BasedOn="{StaticResource ModernTabItem}"/>
+                </TabControl.ItemContainerStyle>
+                <TabControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
+                            <Button Content="✕" Margin="10,0,0,0" Padding="4,0" FontSize="11"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                    Foreground="{StaticResource TextSecondary}"
+                                    Command="{Binding DataContext.CloseCommand,
+                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
+            </TabControl>
+
+            <!-- Empty state -->
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Visibility="{Binding Active, Converter={StaticResource NullToVis}}">
+                <TextBlock Text="No log open" FontSize="20" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" Foreground="{StaticResource TextSecondary}"/>
+                <TextBlock Text="Open a log4net file or drag one onto the window."
+                           Margin="0,8,0,16" HorizontalAlignment="Center"
+                           Foreground="{StaticResource TextSecondary}"/>
+                <Button Style="{StaticResource AccentButton}" Content="Open log(s)…"
+                        HorizontalAlignment="Center" Command="{Binding OpenCommand}"/>
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</Window>

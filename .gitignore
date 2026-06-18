@@ -1,0 +1,18 @@
+# Build output
+bin/
+obj/
+publish/
+*.user
+
+# Rider / VS
+.vs/
+.idea/
+*.suo
+
+# Logs you might drop in while testing (keep the curated samples/)
+*.log
+!samples/*.log
+
+# OS
+Thumbs.db
+.DS_Store
