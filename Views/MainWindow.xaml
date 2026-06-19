@@ -4,9 +4,9 @@
         xmlns:conv="clr-namespace:LogReader.Converters"
         xmlns:beh="clr-namespace:LogReader.Behaviors"
         xmlns:vm="clr-namespace:LogReader.ViewModels"
-        Title="LogReader — log4net viewer" Height="760" Width="1240"
+        Title="LogReader" Height="760" Width="1240"
         Icon="/Assets/logreader.ico"
-        Background="{StaticResource WindowBg}"
+        Background="{DynamicResource WindowBg}"
         AllowDrop="True" PreviewDrop="Window_Drop" PreviewDragOver="Window_DragOver"
         UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
 
@@ -21,8 +21,8 @@
             <DockPanel>
 
                 <!-- Filter / search bar -->
-                <Border DockPanel.Dock="Top" Background="{StaticResource PanelBg}"
-                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1"
+                <Border DockPanel.Dock="Top" Background="{DynamicResource PanelBg}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
                         Padding="12,10">
                     <StackPanel>
                         <DockPanel LastChildFill="True">
@@ -34,7 +34,7 @@
                                 <TextBox Style="{StaticResource ModernTextBox}"
                                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=150}"/>
                                 <TextBlock Text="Search messages, loggers, stack traces…  (Ctrl+F)"
-                                           Foreground="{StaticResource TextSecondary}"
+                                           Foreground="{DynamicResource TextSecondary}"
                                            Margin="10,0,0,0" VerticalAlignment="Center"
                                            IsHitTestVisible="False">
                                     <TextBlock.Style>
@@ -56,8 +56,8 @@
                                       IsChecked="{Binding UseRegex}"/>
                             <CheckBox Style="{StaticResource ModernCheckBox}" Content="Match case"
                                       IsChecked="{Binding MatchCase}"/>
-                            <Rectangle Width="1" Fill="{StaticResource BorderBrush}" Margin="6,2,12,2"/>
-                            <TextBlock Foreground="{StaticResource TextSecondary}" FontSize="11.5"
+                            <Rectangle Width="1" Fill="{DynamicResource BorderBrush}" Margin="6,2,12,2"/>
+                            <TextBlock Foreground="{DynamicResource TextSecondary}" FontSize="11.5"
                                        VerticalAlignment="Center"
                                        Text="Filter any column from the box under its header — Level has a dropdown."/>
                         </StackPanel>
@@ -65,17 +65,17 @@
                 </Border>
 
                 <!-- Status strip -->
-                <Border DockPanel.Dock="Bottom" Background="{StaticResource PanelBg}"
-                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0"
+                <Border DockPanel.Dock="Bottom" Background="{DynamicResource PanelBg}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
                         Padding="12,5">
                     <DockPanel>
-                        <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource TextSecondary}"
+                        <TextBlock DockPanel.Dock="Right" Foreground="{DynamicResource TextSecondary}"
                                    FontSize="11.5" Margin="14,0,0,0" Text="© 2026 shahbaz.sadik"/>
-                        <Rectangle DockPanel.Dock="Right" Width="1" Fill="{StaticResource BorderBrush}"
+                        <Rectangle DockPanel.Dock="Right" Width="1" Fill="{DynamicResource BorderBrush}"
                                    Margin="14,1,0,1"/>
-                        <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource TextSecondary}"
+                        <TextBlock DockPanel.Dock="Right" Foreground="{DynamicResource TextSecondary}"
                                    FontSize="11.5" Text="{Binding ParserName, StringFormat='Parser: {0}'}"/>
-                        <TextBlock Foreground="{StaticResource TextSecondary}" FontSize="11.5"
+                        <TextBlock Foreground="{DynamicResource TextSecondary}" FontSize="11.5"
                                    Text="{Binding StatusText}"/>
                     </DockPanel>
                 </Border>
@@ -198,7 +198,7 @@
                                 </DataGridTemplateColumn.Header>
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Foreground="{StaticResource TextSecondary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                        <TextBlock Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                    beh:Highlighter.Text="{Binding Logger}"
                                                    beh:Highlighter.Query="{Binding DataContext.FilterLogger, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                    beh:Highlighter.Global="{Binding DataContext.SearchText, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
@@ -222,11 +222,11 @@
                                                    beh:Highlighter.Global="{Binding DataContext.SearchText, RelativeSource={RelativeSource AncestorType=DataGrid}}">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
                                                     <Style.Triggers>
                                                         <!-- Rows that carry an exception / stack trace stand out -->
                                                         <DataTrigger Binding="{Binding HasException}" Value="True">
-                                                            <Setter Property="Foreground" Value="#FFFF8A7A"/>
+                                                            <Setter Property="Foreground" Value="{DynamicResource ExceptionFg}"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -239,37 +239,37 @@
                     </DataGrid>
 
                     <GridSplitter Grid.Row="1" Height="3" HorizontalAlignment="Stretch"
-                                  Background="{StaticResource BorderBrush}"
+                                  Background="{DynamicResource BorderBrush}"
                                   Visibility="{Binding SelectedEntry, Converter={StaticResource NullToVis}, ConverterParameter=invert}"/>
 
-                    <Border Grid.Row="2" Background="{StaticResource PanelBg2}" MaxHeight="260"
+                    <Border Grid.Row="2" Background="{DynamicResource PanelBg2}" MaxHeight="260"
                             Visibility="{Binding SelectedEntry, Converter={StaticResource NullToVis}, ConverterParameter=invert}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14,10">
                             <StackPanel>
                                 <!-- Tip: select any text below and Ctrl+C, or right-click a row to copy a field -->
                                 <WrapPanel Margin="0,0,0,8">
                                     <TextBlock Text="{Binding SelectedEntry.TimestampText, StringFormat='🕑 {0}'}"
-                                               Foreground="{StaticResource TextSecondary}" Margin="0,0,16,0"/>
+                                               Foreground="{DynamicResource TextSecondary}" Margin="0,0,16,0"/>
                                     <TextBlock Text="{Binding SelectedEntry.Level, StringFormat='● {0}'}"
-                                               Foreground="{StaticResource TextSecondary}" Margin="0,0,16,0"/>
+                                               Foreground="{DynamicResource TextSecondary}" Margin="0,0,16,0"/>
                                     <TextBlock Text="{Binding SelectedEntry.Thread, StringFormat='thread {0}'}"
-                                               Foreground="{StaticResource TextSecondary}" Margin="0,0,16,0"/>
+                                               Foreground="{DynamicResource TextSecondary}" Margin="0,0,16,0"/>
                                     <StackPanel Orientation="Horizontal" Margin="0,0,16,0"
                                                 Visibility="{Binding SelectedEntry.CorrelationId, Converter={StaticResource StrToVis}}">
-                                        <TextBlock Text="corr " Foreground="{StaticResource TextSecondary}"/>
+                                        <TextBlock Text="corr " Foreground="{DynamicResource TextSecondary}"/>
                                         <TextBox Style="{StaticResource SelectableText}" TextWrapping="NoWrap"
                                                  Foreground="#FF56A8F5"
                                                  Text="{Binding SelectedEntry.CorrelationId, Mode=OneWay}"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Margin="0,0,16,0"
                                                 Visibility="{Binding SelectedEntry.User, Converter={StaticResource StrToVis}}">
-                                        <TextBlock Text="user " Foreground="{StaticResource TextSecondary}"/>
+                                        <TextBlock Text="user " Foreground="{DynamicResource TextSecondary}"/>
                                         <TextBox Style="{StaticResource SelectableText}" TextWrapping="NoWrap"
-                                                 Foreground="{StaticResource TextSecondary}"
+                                                 Foreground="{DynamicResource TextSecondary}"
                                                  Text="{Binding SelectedEntry.User, Mode=OneWay}"/>
                                     </StackPanel>
                                 </WrapPanel>
-                                <TextBox Style="{StaticResource SelectableText}" Foreground="{StaticResource TextSecondary}"
+                                <TextBox Style="{StaticResource SelectableText}" Foreground="{DynamicResource TextSecondary}"
                                          FontSize="11.5" Margin="0,0,0,8"
                                          Text="{Binding SelectedEntry.Logger, Mode=OneWay}"/>
                                 <TextBox Style="{StaticResource SelectableText}"
@@ -291,12 +291,13 @@
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Image Source="/Assets/logreader.png" Width="72" Height="72"
                                    HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <!-- Fixed light colours: the overlay backdrop is dark in both themes -->
                             <TextBlock Text="Uploading file…" Margin="0,16,0,0"
                                        HorizontalAlignment="Center" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextPrimary}" FontSize="14"/>
+                                       Foreground="#FFE6EDF3" FontSize="14"/>
                             <TextBlock Text="{Binding Title}" Margin="0,3,0,0"
                                        HorizontalAlignment="Center"
-                                       Foreground="{StaticResource TextSecondary}" FontSize="11.5"/>
+                                       Foreground="#FF9DA7B3" FontSize="11.5"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -306,8 +307,8 @@
 
     <DockPanel>
         <!-- Toolbar -->
-        <Border DockPanel.Dock="Top" Background="{StaticResource PanelBg}"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="12,10">
+        <Border DockPanel.Dock="Top" Background="{DynamicResource PanelBg}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="12,10">
             <DockPanel LastChildFill="False">
                 <TextBlock Text="LogReader" FontSize="16" FontWeight="Bold"
                            VerticalAlignment="Center" Margin="2,0,18,0"/>
@@ -315,20 +316,23 @@
                         Command="{Binding OpenCommand}"/>
                 <Button Style="{StaticResource ModernButton}" Content="Reload" Margin="8,0,0,0"
                         Command="{Binding ReloadCommand}"/>
-                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
-                           Foreground="{StaticResource TextSecondary}" FontSize="11.5"
-                           Text="Drag &amp; drop log files here"/>
+                <ToggleButton x:Name="ThemeToggle" DockPanel.Dock="Right" Style="{StaticResource ThemeSwitch}"
+                              VerticalAlignment="Center" Margin="8,0,2,0"
+                              ToolTip="Toggle light / dark theme" Click="ThemeToggle_Click"/>
+                <TextBlock x:Name="ThemeLabel" DockPanel.Dock="Right" VerticalAlignment="Center"
+                           FontSize="12" FontWeight="SemiBold" Margin="0,0,2,0"
+                           Foreground="{DynamicResource TextSecondary}"/>
             </DockPanel>
         </Border>
 
         <Grid>
             <TabControl ItemsSource="{Binding Documents}"
                         SelectedItem="{Binding Active}"
-                        Background="{StaticResource WindowBg}" BorderThickness="0"
+                        Background="{DynamicResource WindowBg}" BorderThickness="0"
                         ContentTemplate="{StaticResource DocumentTemplate}">
-                <!-- Custom template: the default TabControl uses a wrapping TabPanel
-                     (ignores ItemsPanel), so we host the headers in a single-row
-                     UniformGrid that shrinks the tabs to share the width. -->
+                <!-- Custom template: all headers fit in one row (no scrolling). The
+                     FillTabPanel gives the active tab a larger share and divides the
+                     rest among the inactive tabs, which shrink as more open. -->
                 <TabControl.Template>
                     <ControlTemplate TargetType="TabControl">
                         <Grid>
@@ -336,9 +340,9 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <UniformGrid Grid.Row="0" Rows="1" IsItemsHost="True"
-                                         Background="{StaticResource WindowBg}"/>
-                            <Border Grid.Row="1" Background="{StaticResource WindowBg}">
+                            <beh:FillTabPanel Grid.Row="0" IsItemsHost="True"
+                                              Background="{DynamicResource WindowBg}"/>
+                            <Border Grid.Row="1" Background="{DynamicResource WindowBg}">
                                 <ContentPresenter x:Name="PART_SelectedContentHost"
                                                   ContentSource="SelectedContent"/>
                             </Border>
@@ -350,16 +354,36 @@
                 </TabControl.ItemContainerStyle>
                 <TabControl.ItemTemplate>
                     <DataTemplate>
-                        <DockPanel LastChildFill="True">
-                            <Button DockPanel.Dock="Right" Content="✕" Margin="8,0,0,0" Padding="4,0"
-                                    FontSize="11" Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                    Foreground="{StaticResource TextSecondary}"
+                        <!-- Pin icon (left, when pinned) + title that ellipsizes; the ✕ is
+                             overlaid on the right edge so it's always visible. -->
+                        <Grid>
+                            <Grid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Pin tab (keep on left)" IsCheckable="True"
+                                              IsChecked="{Binding IsPinned, Mode=TwoWay}"
+                                              Click="PinTab_Click"/>
+                                    <Separator/>
+                                    <MenuItem Header="Close tab" Click="CloseTab_Click"/>
+                                    <MenuItem Header="Close other tabs" Click="CloseOtherTabs_Click"/>
+                                    <MenuItem Header="Close all tabs" Click="CloseAllTabs_Click"/>
+                                </ContextMenu>
+                            </Grid.ContextMenu>
+                            <DockPanel Margin="0,0,18,0" LastChildFill="True">
+                                <Path DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,5,0"
+                                      Width="8" Height="9" Stretch="Fill" Fill="{DynamicResource Accent}"
+                                      Data="M4,0 C1.8,0 0,1.8 0,4 C0,7 4,9 4,9 C4,9 8,7 8,4 C8,1.8 6.2,0 4,0 Z"
+                                      Visibility="{Binding IsPinned, Converter={StaticResource BoolToVis}}"/>
+                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
+                                           FontSize="11.5" TextTrimming="CharacterEllipsis"/>
+                            </DockPanel>
+                            <Button Content="✕" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Width="16" Height="16" Padding="0" FontSize="10"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                    Foreground="{DynamicResource TextSecondary}"
                                     Command="{Binding DataContext.CloseCommand,
                                               RelativeSource={RelativeSource AncestorType=Window}}"
                                     CommandParameter="{Binding}"/>
-                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
-                                       TextTrimming="CharacterEllipsis" ToolTip="{Binding FilePath}"/>
-                        </DockPanel>
+                        </Grid>
                     </DataTemplate>
                 </TabControl.ItemTemplate>
             </TabControl>
@@ -368,10 +392,10 @@
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
                         Visibility="{Binding Active, Converter={StaticResource NullToVis}}">
                 <TextBlock Text="No log open" FontSize="20" FontWeight="SemiBold"
-                           HorizontalAlignment="Center" Foreground="{StaticResource TextSecondary}"/>
+                           HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondary}"/>
                 <TextBlock Text="Open a log4net file or drag one onto the window."
                            Margin="0,8,0,16" HorizontalAlignment="Center"
-                           Foreground="{StaticResource TextSecondary}"/>
+                           Foreground="{DynamicResource TextSecondary}"/>
                 <Button Style="{StaticResource AccentButton}" Content="Open log(s)…"
                         HorizontalAlignment="Center" Command="{Binding OpenCommand}"/>
             </StackPanel>

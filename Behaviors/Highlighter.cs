@@ -15,9 +15,6 @@ namespace LogReader.Behaviors;
 /// </summary>
 public static class Highlighter
 {
-    private static readonly Brush HighlightBackground = Frozen(Color.FromArgb(0x70, 0xFF, 0xA5, 0x2C));
-    private static readonly Brush HighlightForeground = Frozen(Color.FromArgb(0xFF, 0xFF, 0xD9, 0xA0));
-
     // ---- Attached properties --------------------------------------------
 
     public static readonly DependencyProperty TextProperty = DependencyProperty.RegisterAttached(
@@ -71,12 +68,12 @@ public static class Highlighter
             if (start > pos)
                 tb.Inlines.Add(new Run(text.Substring(pos, start - pos)));
 
-            tb.Inlines.Add(new Run(text.Substring(start, length))
-            {
-                Background = HighlightBackground,
-                Foreground = HighlightForeground,
-                FontWeight = FontWeights.SemiBold
-            });
+            var hit = new Run(text.Substring(start, length)) { FontWeight = FontWeights.SemiBold };
+            // Theme-aware highlight colours (resolve from the active palette and
+            // update live on light/dark switch).
+            hit.SetResourceReference(TextElement.BackgroundProperty, "HighlightBg");
+            hit.SetResourceReference(TextElement.ForegroundProperty, "HighlightFg");
+            tb.Inlines.Add(hit);
             pos = start + length;
         }
         if (pos < text.Length)
@@ -120,12 +117,5 @@ public static class Highlighter
         }
         merged.Add(cur);
         return merged;
-    }
-
-    private static Brush Frozen(Color c)
-    {
-        var b = new SolidColorBrush(c);
-        b.Freeze();
-        return b;
     }
 }

@@ -1,21 +1,21 @@
-<log4j:event logger="Ding.App.Startup" timestamp="1781687642131" level="INFO" thread="1">
+<log4j:event logger="Acme.App.Startup" timestamp="1781687642131" level="INFO" thread="1">
   <log4j:message>Application starting, version 4.2.1</log4j:message>
 </log4j:event>
-<log4j:event logger="Ding.Data.ConnectionPool" timestamp="1781687642540" level="INFO" thread="4">
+<log4j:event logger="Acme.Data.ConnectionPool" timestamp="1781687642540" level="INFO" thread="4">
   <log4j:message>Opened connection pool (min=5, max=50)</log4j:message>
 </log4j:event>
-<log4j:event logger="Ding.Data.QueryCache" timestamp="1781687643012" level="WARN" thread="7">
+<log4j:event logger="Acme.Data.QueryCache" timestamp="1781687643012" level="WARN" thread="7">
   <log4j:message>Cache miss ratio high (62%); consider warming cache</log4j:message>
 </log4j:event>
-<log4j:event logger="Ding.Trading.Settlement" timestamp="1781687713447" level="ERROR" thread="15">
+<log4j:event logger="Acme.Trading.Settlement" timestamp="1781687713447" level="ERROR" thread="15">
   <log4j:message>Settlement failed for order #889201</log4j:message>
   <log4j:throwable>System.TimeoutException: The operation has timed out after 30000ms.
-   at Ding.Trading.Settlement.SettlementClient.PostAsync(SettlementRequest req)
-   at Ding.Trading.Settlement.SettlementService.SettleAsync(Int64 orderId)</log4j:throwable>
+   at Acme.Trading.Settlement.SettlementClient.PostAsync(SettlementRequest req)
+   at Acme.Trading.Settlement.SettlementService.SettleAsync(Int64 orderId)</log4j:throwable>
 </log4j:event>
-<log4j:event logger="Ding.Data.ConnectionPool" timestamp="1781688068733" level="FATAL" thread="24">
+<log4j:event logger="Acme.Data.ConnectionPool" timestamp="1781688068733" level="FATAL" thread="24">
   <log4j:message>Connection pool exhausted; rejecting requests</log4j:message>
 </log4j:event>
-<log4j:event logger="Ding.Jobs.Reconciliation" timestamp="1781688300000" level="INFO" thread="1">
+<log4j:event logger="Acme.Jobs.Reconciliation" timestamp="1781688300000" level="INFO" thread="1">
   <log4j:message>Nightly reconciliation completed: 4,201 records, 0 mismatches</log4j:message>
 </log4j:event>

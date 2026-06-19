@@ -35,32 +35,30 @@ public sealed class XmlLogParser : ILogParser
         _buffer.Append(chunk);
         var results = new List<LogEntry>();
 
+        // Materialise the buffer once, scan all complete events with a moving
+        // offset, then drop the consumed prefix in a single Remove (avoids the
+        // O(n^2) cost of ToString()-ing the whole buffer for every event).
+        var text = _buffer.ToString();
+        int consumed = 0;
         while (true)
         {
-            var text = _buffer.ToString();
-            int open = text.IndexOf(OpenTag, StringComparison.Ordinal);
-            if (open < 0) { TrimTo(text.Length); break; }
+            int open = text.IndexOf(OpenTag, consumed, StringComparison.Ordinal);
+            if (open < 0) { consumed = text.Length; break; }        // no (more) events
 
             int close = text.IndexOf(CloseTag, open, StringComparison.Ordinal);
-            if (close < 0) { TrimTo(open); break; } // wait for the rest of this event
+            if (close < 0) { consumed = open; break; }              // wait for the rest of this event
 
             int eventEnd = close + CloseTag.Length;
-            var block = text.Substring(open, eventEnd - open);
-            var entry = ParseEvent(block);
+            var entry = ParseEvent(text.Substring(open, eventEnd - open));
             if (entry != null) results.Add(entry);
-
-            _buffer.Remove(0, eventEnd);
+            consumed = eventEnd;
         }
 
+        if (consumed > 0) _buffer.Remove(0, consumed);
         return results;
     }
 
     public IEnumerable<LogEntry> Flush() => Array.Empty<LogEntry>();
-
-    private void TrimTo(int keepFrom)
-    {
-        if (keepFrom > 0) _buffer.Remove(0, keepFrom);
-    }
 
     private LogEntry? ParseEvent(string block)
     {

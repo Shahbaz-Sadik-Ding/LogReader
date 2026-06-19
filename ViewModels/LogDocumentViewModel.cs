@@ -26,6 +26,13 @@ public sealed class LogDocumentViewModel : ObservableObject, IDisposable
     public string Title { get; }
     public string ParserName => _parser.Name;
 
+    private bool _isPinned;
+    public bool IsPinned
+    {
+        get => _isPinned;
+        set => SetField(ref _isPinned, value);
+    }
+
     public RangeObservableCollection<LogEntry> Entries { get; } = new();
     public ICollectionView View { get; }
 
@@ -45,10 +52,12 @@ public sealed class LogDocumentViewModel : ObservableObject, IDisposable
         View.Filter = FilterPredicate;
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(750) };
-        _timer.Tick += (_, _) => PollNew();
+        _timer.Tick += OnTick;
 
         _ = LoadInitialAsync();
     }
+
+    private void OnTick(object? sender, EventArgs e) => _ = PollAsync();
 
     private bool _isLoading;
     public bool IsLoading
@@ -117,7 +126,7 @@ public sealed class LogDocumentViewModel : ObservableObject, IDisposable
         set
         {
             if (!SetField(ref _liveTail, value)) return;
-            if (value) { PollNew(); _timer.Start(); }
+            if (value) { _ = PollAsync(); _timer.Start(); }
             else _timer.Stop();
         }
     }
@@ -168,14 +177,27 @@ public sealed class LogDocumentViewModel : ObservableObject, IDisposable
         }
     }
 
-    private void PollNew()
+    private bool _polling;
+
+    /// <summary>
+    /// Reads appended bytes on a background thread (so the live-tail timer never
+    /// blocks the UI), then appends the parsed rows on the UI thread. Guarded so
+    /// overlapping ticks (or a poll during the initial load) can't double-read.
+    /// </summary>
+    private async Task PollAsync()
     {
+        if (_polling || IsLoading) return;
+        _polling = true;
         try
         {
-            var text = _reader.ReadNew();
+            var text = await Task.Run(() =>
+            {
+                try { return _reader.ReadNew(); }
+                catch (IOException) { return string.Empty; }
+            });
             if (text.Length > 0) AppendParsed(text, flush: false);
         }
-        catch (IOException) { /* file briefly locked; try again next tick */ }
+        finally { _polling = false; }
     }
 
     private void AppendParsed(string text, bool flush)
@@ -285,5 +307,9 @@ public sealed class LogDocumentViewModel : ObservableObject, IDisposable
         catch { return string.Empty; }
     }
 
-    public void Dispose() => _timer.Stop();
+    public void Dispose()
+    {
+        _timer.Stop();
+        _timer.Tick -= OnTick;
+    }
 }

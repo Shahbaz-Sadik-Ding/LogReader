@@ -31,9 +31,13 @@ public sealed class LogEntry
     /// <summary>The original unparsed text for this record.</summary>
     public string Raw { get; init; } = string.Empty;
 
+    // Cached: these are read for every row on every filter refresh / cell render,
+    // and the entry is immutable (init-only), so compute once.
+    private string? _timestampText;
     public string TimestampText =>
-        Timestamp?.ToString("yyyy-MM-dd HH:mm:ss.fff") ?? string.Empty;
+        _timestampText ??= Timestamp?.ToString("yyyy-MM-dd HH:mm:ss.fff") ?? string.Empty;
 
     /// <summary>Normalised level used for filtering and coloring.</summary>
-    public LogLevel LevelValue => LogLevels.Parse(Level);
+    private LogLevel? _levelValue;
+    public LogLevel LevelValue => _levelValue ??= LogLevels.Parse(Level);
 }

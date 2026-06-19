@@ -143,6 +143,38 @@ Open source under the MIT License — add a `LICENSE` file with your details.
 
 # Release notes
 
+## v1.3.0
+
+**Theme**
+- **Light & dark themes** with a sliding sun/moon toggle (and a "Dark"/"Light"
+  label) in the top-right. The choice is remembered between runs, and the native
+  title bar follows the theme.
+- Search highlighting, tooltips and exception text are theme-aware and stay
+  readable in both modes.
+
+**Tabs**
+- All open tabs fit on a **single row** (no wrapping, no horizontal scroll): tabs
+  size to their name up to a sensible max (so a few tabs stay regular-sized rather
+  than stretching across the row) and only shrink when the row fills up. The active
+  tab gets a little more room to show its full name.
+- **Pin tabs** — right-click a tab and "Pin tab" to keep it on the left (pinned
+  tabs show a pin marker and persist between runs).
+- Right-click a tab to **Close tab / Close other tabs / Close all tabs**.
+- Hover a tab to see its file name; the close (✕) button is always visible, even
+  on narrow tabs.
+
+**Session**
+- Reopens the **tabs from your last run** (with the previously active tab and
+  pinned tabs restored) when launched without file arguments.
+
+**Misc**
+- Status bar shows a copyright; the window title is just "LogReader".
+
+**Performance / internals**
+- Live-tail file reads run on a background thread (no UI stalls), with cached
+  level/timestamp values and an O(n) XML parse path; timer/handler cleanup on
+  close.
+
 ## v1.2.0
 
 **Parsing**

@@ -1,0 +1,27 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Light palette. Same keys as Palette.Dark.xaml. Accent and the live-tail
+         green are kept identical to dark; only neutrals, selection, scrollbar and
+         the exception text are adjusted for readability on a light background. -->
+    <Color x:Key="WindowBgColor">#FFFFFFFF</Color>
+    <SolidColorBrush x:Key="WindowBg" Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="PanelBg" Color="#FFF0F3F6"/>
+    <SolidColorBrush x:Key="PanelBg2" Color="#FFE7ECF1"/>
+    <SolidColorBrush x:Key="ControlBg" Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="#FFD0D7DE"/>
+    <SolidColorBrush x:Key="TextPrimary" Color="#FF1F2328"/>
+    <SolidColorBrush x:Key="TextSecondary" Color="#FF656D76"/>
+    <SolidColorBrush x:Key="Accent" Color="#FF2F81F7"/>
+    <SolidColorBrush x:Key="AccentHover" Color="#FF4493F8"/>
+    <SolidColorBrush x:Key="RowAlt" Color="#FFF6F8FA"/>
+    <SolidColorBrush x:Key="Selection" Color="#FFDDEBFF"/>
+    <SolidColorBrush x:Key="SelectionHover" Color="#FFCBE0FF"/>
+    <SolidColorBrush x:Key="LiveGreen" Color="#FF3FB950"/>
+    <SolidColorBrush x:Key="ScrollThumb" Color="#FF5BBE7E"/>
+    <SolidColorBrush x:Key="ScrollThumbHover" Color="#FF3FA866"/>
+    <SolidColorBrush x:Key="ExceptionFg" Color="#FFCF222E"/>
+    <SolidColorBrush x:Key="HighlightBg" Color="#FFFFD466"/>
+    <SolidColorBrush x:Key="HighlightFg" Color="#FF3D2A00"/>
+
+</ResourceDictionary>
