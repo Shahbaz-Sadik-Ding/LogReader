@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -10,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using LogReader.Models;
+using LogReader.Services;
 using LogReader.ViewModels;
 
 namespace LogReader.Views;
@@ -38,13 +40,47 @@ public partial class MainWindow : Window
         EventManager.RegisterClassHandler(typeof(DataGridCell),
             RequestBringIntoViewEvent,
             new RequestBringIntoViewEventHandler((_, e) => e.Handled = true));
+
+        // Restore the saved theme (palette only; the title bar is set once we have a handle).
+        _darkTheme = SessionStore.Load().DarkTheme;
+        ApplyPalette(_darkTheme);
+        ThemeToggle.IsChecked = _darkTheme;   // checked = dark
+        ThemeLabel.Text = _darkTheme ? "Dark" : "Light";
     }
+
+    // Segoe MDL2 Assets: moon (QuietHours) for dark, sun (Brightness) for light.
+    private static string ThemeGlyph(bool dark) => dark ? "" : "";
 
     private void OnSourceInitialized(object? sender, EventArgs e)
     {
         var hwnd = new WindowInteropHelper(this).Handle;
-        EnableDarkTitleBar(hwnd);
+        EnableDarkTitleBar(hwnd, _darkTheme);
         AllowDragDropWhenElevated(hwnd);
+    }
+
+    // -------- Light / dark theme --------
+
+    private bool _darkTheme = true;
+
+    private void ThemeToggle_Click(object sender, RoutedEventArgs e) =>
+        ApplyTheme(ThemeToggle.IsChecked == true);
+
+    private void ApplyTheme(bool dark)
+    {
+        _darkTheme = dark;
+        ApplyPalette(dark);
+        ThemeLabel.Text = dark ? "Dark" : "Light";
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd != IntPtr.Zero) EnableDarkTitleBar(hwnd, dark);
+    }
+
+    // Swaps the active colour palette (MergedDictionaries[0]); DynamicResource
+    // references throughout the app update live.
+    private static void ApplyPalette(bool dark)
+    {
+        var uri = new Uri($"Themes/Palette.{(dark ? "Dark" : "Light")}.xaml", UriKind.Relative);
+        Application.Current.Resources.MergedDictionaries[0] =
+            new ResourceDictionary { Source = uri };
     }
 
     /// <summary>Opens one or more log files (used for command-line arguments).</summary>
@@ -54,14 +90,63 @@ public partial class MainWindow : Window
             _vm.OpenFile(path);
     }
 
+    // Right-click "Pin tab": IsPinned was just toggled by the menu's binding;
+    // reorder so pinned tabs move to the left.
+    private void PinTab_Click(object sender, RoutedEventArgs e) => _vm.ReorderPinned();
+
+    private static LogDocumentViewModel? DocOf(object sender) =>
+        (sender as FrameworkElement)?.DataContext as LogDocumentViewModel;
+
+    private void CloseTab_Click(object sender, RoutedEventArgs e)
+    {
+        if (DocOf(sender) is { } doc) _vm.CloseCommand.Execute(doc);
+    }
+
+    private void CloseOtherTabs_Click(object sender, RoutedEventArgs e) => _vm.CloseOthers(DocOf(sender));
+
+    private void CloseAllTabs_Click(object sender, RoutedEventArgs e) => _vm.CloseAll();
+
+    /// <summary>Reopens the files that were open when the app last closed.</summary>
+    public void RestoreSession()
+    {
+        var state = SessionStore.Load();
+        foreach (var path in state.Files.Where(File.Exists))
+            _vm.OpenFile(path);
+
+        foreach (var doc in _vm.Documents)
+            if (state.Pinned.Contains(doc.FilePath)) doc.IsPinned = true;
+        _vm.ReorderPinned();
+
+        if (state.Active != null)
+        {
+            var match = _vm.Documents.FirstOrDefault(d => d.FilePath == state.Active);
+            if (match != null) _vm.Active = match;
+        }
+    }
+
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        base.OnClosing(e);
+        SessionStore.Save(new SessionState
+        {
+            Files = _vm.Documents.Select(d => d.FilePath).ToList(),
+            Pinned = _vm.Documents.Where(d => d.IsPinned).Select(d => d.FilePath).ToList(),
+            Active = _vm.Active?.FilePath,
+            DarkTheme = _darkTheme
+        });
+
+        // Stop each document's live-tail timer on close.
+        foreach (var doc in _vm.Documents) doc.Dispose();
+    }
+
     // -------- Dark (immersive) native title bar --------
 
     [DllImport("dwmapi.dll", PreserveSig = true)]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
 
-    private static void EnableDarkTitleBar(IntPtr hwnd)
+    private static void EnableDarkTitleBar(IntPtr hwnd, bool dark)
     {
-        int useDark = 1;
+        int useDark = dark ? 1 : 0;
         // Windows 11 / recent Win10 attribute, with fallback to the older value.
         const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
         const int DWMWA_USE_IMMERSIVE_DARK_MODE_OLD = 19;

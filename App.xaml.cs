@@ -14,10 +14,13 @@ public partial class App : Application
         var window = new MainWindow();
         window.Show();
 
-        // Open any log files passed on the command line, e.g.
-        //   LogReader.exe "C:\Logs\app1.log" "C:\Logs\app2.log"
+        // If files were passed on the command line (e.g. the `watch` helper:
+        //   LogReader.exe "C:\Logs\app1.log" "C:\Logs\app2.log"), open those.
+        // Otherwise reopen the tabs from the last session.
         var files = e.Args.Where(File.Exists).ToArray();
         if (files.Length > 0)
             window.OpenFiles(files);
+        else
+            window.RestoreSession();
     }
 }

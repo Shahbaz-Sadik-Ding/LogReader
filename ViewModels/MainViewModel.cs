@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using Microsoft.Win32;
 using LogReader.Parsing;
 
@@ -69,5 +70,47 @@ public sealed class MainViewModel : ObservableObject
         doc.Dispose();
         Documents.Remove(doc);
         if (Active == doc) Active = Documents.Count > 0 ? Documents[^1] : null;
+    }
+
+    /// <summary>Closes every open tab.</summary>
+    public void CloseAll()
+    {
+        foreach (var d in Documents) d.Dispose();
+        Documents.Clear();
+        Active = null;
+    }
+
+    /// <summary>Closes every tab except <paramref name="keep"/>.</summary>
+    public void CloseOthers(LogDocumentViewModel? keep)
+    {
+        if (keep == null) return;
+        foreach (var d in Documents.Where(x => x != keep).ToList())
+        {
+            d.Dispose();
+            Documents.Remove(d);
+        }
+        Active = keep;
+    }
+
+    /// <summary>Toggles a tab's pinned state and moves pinned tabs to the left.</summary>
+    public void TogglePin(LogDocumentViewModel? doc)
+    {
+        if (doc == null) return;
+        doc.IsPinned = !doc.IsPinned;
+        ReorderPinned();
+    }
+
+    /// <summary>
+    /// Stable reorder so pinned tabs sit at the left, each group keeping its
+    /// existing order. Uses Move so the active tab/selection is preserved.
+    /// </summary>
+    public void ReorderPinned()
+    {
+        var desired = Documents.OrderByDescending(d => d.IsPinned).ToList();
+        for (int i = 0; i < desired.Count; i++)
+        {
+            int cur = Documents.IndexOf(desired[i]);
+            if (cur != i) Documents.Move(cur, i);
+        }
     }
 }

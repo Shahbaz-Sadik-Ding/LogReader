@@ -1,0 +1,26 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Dark palette. Same keys exist in Palette.Light.xaml so the two can be
+         swapped at runtime; styles reference these via DynamicResource. -->
+    <Color x:Key="WindowBgColor">#FF0D1117</Color>
+    <SolidColorBrush x:Key="WindowBg" Color="#FF0D1117"/>
+    <SolidColorBrush x:Key="PanelBg" Color="#FF161B22"/>
+    <SolidColorBrush x:Key="PanelBg2" Color="#FF1C2128"/>
+    <SolidColorBrush x:Key="ControlBg" Color="#FF21262D"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="#FF30363D"/>
+    <SolidColorBrush x:Key="TextPrimary" Color="#FFE6EDF3"/>
+    <SolidColorBrush x:Key="TextSecondary" Color="#FF8B949E"/>
+    <SolidColorBrush x:Key="Accent" Color="#FF2F81F7"/>
+    <SolidColorBrush x:Key="AccentHover" Color="#FF4493F8"/>
+    <SolidColorBrush x:Key="RowAlt" Color="#FF12161D"/>
+    <SolidColorBrush x:Key="Selection" Color="#FF1F3350"/>
+    <SolidColorBrush x:Key="SelectionHover" Color="#FF2A476B"/>
+    <SolidColorBrush x:Key="LiveGreen" Color="#FF3FB950"/>
+    <SolidColorBrush x:Key="ScrollThumb" Color="#FF7EE0A0"/>
+    <SolidColorBrush x:Key="ScrollThumbHover" Color="#FFA6EEC0"/>
+    <SolidColorBrush x:Key="ExceptionFg" Color="#FFFF8A7A"/>
+    <SolidColorBrush x:Key="HighlightBg" Color="#70FFA52C"/>
+    <SolidColorBrush x:Key="HighlightFg" Color="#FFFFE2B8"/>
+
+</ResourceDictionary>
